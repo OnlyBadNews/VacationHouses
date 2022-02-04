@@ -2,22 +2,47 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\TagRequest;
+use App\Http\Requests\ArticleRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
- * Class TagCrudController
+ * Class ArticleCrudController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class TagCrudController extends CrudController
+class ArticleCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+
+    private function getFieldsData($show = FALSE) {
+        return [
+            [
+                'name'=> 'title',
+                'label' => 'Title',
+                'type'=> 'text'
+            ],
+            [
+                'name' => 'content',
+                'label' => 'Content',
+                'type' => ($show ? "textarea": 'ckeditor'),
+            ],
+            [    // Select2Multiple = n-n relationship (with pivot table)
+                'label'     => "Tags",
+                'type'      => ($show ? "select": 'select2_multiple'),
+                'name'      => 'tags', // the method that defines the relationship in your Model
+                // optional
+                'entity'    => 'tags', // the method that defines the relationship in your Model
+                'model'     => "App\Models\Tag", // foreign key model
+                'attribute' => 'name', // foreign key attribute that is shown to user
+                'pivot'     => true, // on create&update, do you need to add/delete pivot table entries?
+            ]
+        ];
+    }
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -26,9 +51,11 @@ class TagCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Tag::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/tag');
-        CRUD::setEntityNameStrings('tag', 'tags');
+        CRUD::setModel(\App\Models\Article::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/article');
+        CRUD::setEntityNameStrings('article', 'articles');
+
+        $this->crud->addFields($this->getFieldsData());
     }
 
     /**
@@ -39,8 +66,7 @@ class TagCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-        CRUD::column('name');
-        CRUD::column('slug');
+        CRUD::setFromDb(); //columns
 
         /**
          * Columns can be defined using the fluent syntax or array syntax:
@@ -57,10 +83,9 @@ class TagCrudController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(TagRequest::class);
+        CRUD::setValidation(ArticleRequest::class);
 
-        CRUD::field('name');
-        CRUD::field('slug');
+        CRUD::setFromDb(); //fields
 
         /**
          * Fields can be defined using the fluent syntax or array syntax:
@@ -78,5 +103,14 @@ class TagCrudController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    protected function setupShowOperation()
+    {
+        // by default the Show operation will try to show all columns in the db table,
+        // but we can easily take over, and have full control of what columns are shown,
+        // by changing this config for the Show operation
+        $this->crud->set('show.setFromDb', false);
+        $this->crud->addColumns($this->getFieldsData(TRUE));
     }
 }
