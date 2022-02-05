@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Request;
 use Illuminate\Foundation\Http\FormRequest;
 
-class TagRequest extends FormRequest
+class ArticleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,8 +26,8 @@ class TagRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:5|max:255',
-            'slug' => 'required|unique:tags'
+            'title' => 'required|min:5|max:255',
+            'content' => 'required'
         ];
     }
 
@@ -51,9 +51,7 @@ class TagRequest extends FormRequest
     public function messages()
     {
         return [
-            'name.required' => 'Please provide valid name which is between 5 and 255 characters.',
-            'slug.required' => 'You should provide valid unique slug.',
-            'slug.unique' => 'The slug that you have provided has already been used by another tag.'
+            //
         ];
     }
 }
